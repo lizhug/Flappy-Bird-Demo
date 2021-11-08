@@ -20,6 +20,6 @@ public class Ready : MonoBehaviour
 
     public void StartGame()
     {
-        SceneManager.LoadScene("MainScene");
+        SceneManager.LoadScene(0);
     }
 }

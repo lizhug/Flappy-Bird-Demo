@@ -6,17 +6,23 @@ using System.Threading.Tasks;
 public class Game : MonoBehaviour
 {
 
-    public static bool isGameStarted = false;
-    public static bool isGameEnded = false;
+    private bool isGameStarted = false;
     public static float PipeSpeed = 1f;         // 水管移动速度
-    public float PipeSpeedSet = 1f;
+    public float PipeSpeedSet = 1.3f;
+    public bool isDisableTouch = false;
 
     public GameObject StartCanvas;
     public GameObject GameOverCanvas;
     public GameObject PipePrefab;
     public GameObject ScoreCanvas;
     public GameObject Bird;
-    public Rigidbody2D birdRigidbody;
+    public GameObject BestScore;
+    public GameObject LastScore;
+    public GameObject NewLabel;
+
+    public Rigidbody2D BirdRigidbody;
+  
+
     
     public GameObject NumberText;
     public Animator animator;
@@ -29,10 +35,7 @@ public class Game : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        GameObject.FindGameObjectWithTag("Ground").GetComponent<Animator>().enabled = false;
-        StartCanvas.GetComponent<Canvas>().enabled = true;
-        ScoreCanvas.GetComponent<Canvas>().enabled = false;
-        GameOverCanvas.GetComponent<Canvas>().enabled = false;
+        ResetGame();
     }
 
 
@@ -42,27 +45,14 @@ public class Game : MonoBehaviour
     {
 /*        Debug.Log(birdRigidbody.velocity);*/
 
-        if (isGameEnded)
-        {
-            EndGame();
-        } else
-        {
-            if (Input.GetMouseButtonUp(0) || Input.touchCount == 1)
-            {
-                if (isGameStarted)
-                {
-                    // 游戏操作逻辑
-                    birdRigidbody.velocity = transform.TransformDirection(Vector2.up * 3);
-                    birdRigidbody.transform.rotation = Quaternion.Euler(0, 0, 40);
-                }
-                else
-                {
-                    StartGame();
-                }
-            }
-
             if (isGameStarted)
             {
+                if (Input.GetMouseButtonUp(0) || Input.touchCount == 1)
+                {
+                // 游戏操作逻辑
+                    BirdRigidbody.velocity = transform.TransformDirection(Vector2.up * 2);
+                    BirdRigidbody.transform.rotation = Quaternion.Euler(0, 0, 40);
+                }
 
                 PipeSpeed = PipeSpeedSet;
                 NumberText.GetComponent<UnityEngine.UI.Text>().text = Score.ToString(); // 更新分数
@@ -82,7 +72,7 @@ public class Game : MonoBehaviour
                         await Task.Delay(2000);
 
                         // 如果游戏没结束 则执行删除
-                        if (isGameEnded.Equals(false))
+                        if (isGameStarted.Equals(true))
                         {
                             Destroy(pipe);
                         }
@@ -93,12 +83,11 @@ public class Game : MonoBehaviour
                 }
 
                 //旋转鸟的角度
-                birdRigidbody.transform.rotation = Quaternion.Lerp(birdRigidbody.transform.rotation, Quaternion.Euler(0, 0, -90), Time.deltaTime * PipeSpeed);
-            }
-
-        }
-        
-        
+                BirdRigidbody.transform.rotation = Quaternion.Lerp(BirdRigidbody.transform.rotation, Quaternion.Euler(0, 0, -90), Time.deltaTime * PipeSpeed);
+            } else if ((Input.GetMouseButtonUp(0) || Input.touchCount == 1) && isDisableTouch.Equals(false))
+            {
+                StartGame();
+            }   
     }
 
 
@@ -115,40 +104,66 @@ public class Game : MonoBehaviour
         PipeTimer = PipeSpeedSet;
 
         // 开始游戏
-        
-        StartCanvas.GetComponent<Canvas>().enabled = false;
-        ScoreCanvas.GetComponent<Canvas>().enabled = true;
-        GameOverCanvas.GetComponent<Canvas>().enabled = false;
+
+        StartCanvas.SetActive(false);
+        ScoreCanvas.SetActive(true);
+        GameOverCanvas.SetActive(false);
         PipeSpeed = PipeSpeedSet;
-        birdRigidbody.simulated = true;
+        BirdRigidbody.simulated = true;
 
         animator.SetFloat("isPlaying", 1);
 
-        birdRigidbody.GetComponent<CapsuleCollider2D>().isTrigger = true;
-        birdRigidbody.GetComponent<Rigidbody2D>().freezeRotation = false;
+        BirdRigidbody.GetComponent<CapsuleCollider2D>().isTrigger = true;
+        BirdRigidbody.GetComponent<Rigidbody2D>().freezeRotation = false;
 
-        birdRigidbody.transform.rotation = Quaternion.Euler(0, 0, 40);
+        BirdRigidbody.transform.rotation = Quaternion.Euler(0, 0, 40);
 
         GameObject.FindGameObjectWithTag("Ground").GetComponent<Animator>().enabled = true;
 
         isGameStarted = true;
     }
 
+    public void ResetGame()
+    {
+        GameObject.FindGameObjectWithTag("Ground").GetComponent<Animator>().enabled = true;
+        
+        StartCanvas.SetActive(true);
+        ScoreCanvas.SetActive(false);
+        GameOverCanvas.SetActive(false);
+        isGameStarted = false;
+        isDisableTouch = false;
+
+        Debug.Log("准备开始游戏");
+    }
+
     public void EndGame()
     {
         // 游戏结束了
-
-        GameOverCanvas.GetComponent<Canvas>().enabled = true;
-        StartCanvas.GetComponent<Canvas>().enabled = false;
-        ScoreCanvas.GetComponent<Canvas>().enabled = false;
+     
 
         PipeSpeed = 0;      // 水管停止移动
-
+        isDisableTouch = true;
+        isGameStarted = false;
 
         animator.SetFloat("isPlaying", 2);      // 死亡动画模式
-        birdRigidbody.GetComponent<CapsuleCollider2D>().isTrigger = false;  // 默认碰撞检测接管
-        birdRigidbody.transform.rotation = Quaternion.Euler(0, 0, -90f);
-        birdRigidbody.GetComponent<Rigidbody2D>().freezeRotation = true;        // 冻结碰撞旋转
+        BirdRigidbody.GetComponent<CapsuleCollider2D>().isTrigger = false;  // 默认碰撞检测接管
+        BirdRigidbody.transform.rotation = Quaternion.Euler(0, 0, -90f);
+        BirdRigidbody.GetComponent<Rigidbody2D>().freezeRotation = true;        // 冻结碰撞旋转
+
+        // 记录写入score
+        int bestScore = PlayerPrefs.GetInt("BestScore");
+        if (Score > bestScore)
+        {
+            PlayerPrefs.SetInt("BestScore", Score);     // 更新最新记录
+            bestScore = Score;
+            NewLabel.SetActive(true);
+        } else
+        {
+            NewLabel.SetActive(false);
+        }
+
+        BestScore.GetComponent<UnityEngine.UI.Text>().text = bestScore.ToString();
+        LastScore.GetComponent<UnityEngine.UI.Text>().text = Score.ToString();
 
         GameObject.FindGameObjectWithTag("Ground").GetComponent<Animator>().enabled = false;
 
@@ -158,5 +173,9 @@ public class Game : MonoBehaviour
         {
             tmpPipe.GetComponent<BoxCollider2D>().enabled = false;
         }
+
+        GameOverCanvas.SetActive(true);
+        StartCanvas.SetActive(false);
+        ScoreCanvas.SetActive(false);
     }
 }

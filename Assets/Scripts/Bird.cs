@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Bird : MonoBehaviour
 {
+
+    public Game game;
     // Start is called before the first frame update
     void Start()
     {
@@ -18,13 +20,12 @@ public class Bird : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.name == "Ground" || collision.name == "PipeTop" || collision.name == "PipeDown")
+        if (collision.name == "Ground" || collision.name == "PipeTop" || collision.name == "PipeDown" || collision.name == "SkyBoxCollision")
         {
 
             Debug.Log("×²µ½ÁË" + collision.name);
 
-            Game.isGameEnded = true;
-            Game.isGameStarted = false;
+            game.EndGame();
         }
     }
 }

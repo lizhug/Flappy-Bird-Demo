@@ -6,6 +6,13 @@ TagManager:
   tags:
   - Ground
   - Pipe
+  - GameOver
+  - Number
+  - StartGame
+  - ScoreCanvas
+  - BestScore
+  - LastScore
+  - NewLabel
   layers:
   - Default
   - TransparentFX
